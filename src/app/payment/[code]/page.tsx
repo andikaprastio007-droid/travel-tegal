@@ -7,6 +7,20 @@ import { PaymentClient } from "./PaymentClient";
 
 export const dynamic = "force-dynamic";
 
+type MethodType = "BANK_TRANSFER" | "QRIS" | "WHATSAPP";
+
+type Method = {
+  id: string;
+  type: MethodType;
+  name: string;
+  bankAccounts: {
+    id: string;
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+  }[];
+};
+
 export default async function PaymentPage({ params }: { params: { code: string } }) {
   const settings = await getSettings();
   const booking = await prisma.booking.findUnique({
@@ -21,19 +35,11 @@ export default async function PaymentPage({ params }: { params: { code: string }
     orderBy: { order: "asc" },
   });
 
-  type MethodType = "BANK_TRANSFER" | "QRIS" | "WHATSAPP";
-  type Method = {
-    id: string;
-    type: MethodType;
-    name: string;
-    bankAccounts: { id: string; bankName: string; accountNumber: string; accountName: string }[];
-  };
-
-  const typedMethods: Method[] = methods.map(m => ({
+  const typedMethods: Method[] = methods.map((m) => ({
     id: m.id,
     type: m.type as MethodType,
     name: m.name,
-    bankAccounts: m.bankAccounts.map(b => ({
+    bankAccounts: m.bankAccounts.map((b) => ({
       id: b.id,
       bankName: b.bankName,
       accountNumber: b.accountNumber,
@@ -50,9 +56,11 @@ export default async function PaymentPage({ params }: { params: { code: string }
           code={booking.code}
           customerPhone={booking.customerPhone}
           customerName={booking.customerName}
-          route={booking.charter
-            ? `${booking.charter.vehicleType.name}: ${booking.charter.origin} → ${booking.charter.destination}`
-            : `${booking.route?.origin} → ${booking.route?.destination}`}
+          route={
+            booking.charter
+              ? `${booking.charter.vehicleType.name}: ${booking.charter.origin} → ${booking.charter.destination}`
+              : `${booking.route?.origin} → ${booking.route?.destination}`
+          }
           date={new Date(booking.departureDate).toISOString().slice(0, 10)}
           passengers={booking.passengerCount}
           total={booking.totalPrice}
@@ -63,7 +71,12 @@ export default async function PaymentPage({ params }: { params: { code: string }
           qrisImage={settings.qris_image_url}
         />
       </main>
-      <Footer travelName={settings.travel_name} address={settings.contact_address} email={settings.contact_email} footerText={settings.footer_text} />
+      <Footer
+        travelName={settings.travel_name}
+        address={settings.contact_address}
+        email={settings.contact_email}
+        footerText={settings.footer_text}
+      />
     </div>
   );
 }
