@@ -21,7 +21,6 @@ export default async function PaymentPage({ params }: { params: { code: string }
     orderBy: { order: "asc" },
   });
 
-  // Cast type karena Prisma SQLite tidak support enum
   type MethodType = "BANK_TRANSFER" | "QRIS" | "WHATSAPP";
   type Method = {
     id: string;
