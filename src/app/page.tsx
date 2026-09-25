@@ -40,7 +40,7 @@ export default async function HomePage() {
       <Navbar travelName={settings.travel_name} />
       <section className="bg-gradient-to-br from-brand-600 to-brand-900 text-white">
         <div className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
-          <h1 className="text-2xl sm:text-4xl font-bold leading-tight">Travel Tegal ↔ Jabodetabek</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold leading-tight">Restu Trans</h1>
           <p className="mt-3 text-sm sm:text-lg text-brand-100 max-w-2xl">{settings.travel_tagline}</p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link href="/search" className="btn bg-white text-brand-700 hover:bg-gray-100">Pesan Tiket</Link>
