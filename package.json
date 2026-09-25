@@ -9,7 +9,8 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "vercel-build": "prisma generate && prisma db push --skip-generate && next build"
+    "vercel-build": "prisma generate && prisma db push --skip-generate && next build",
+    "postinstall": "prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
