@@ -5,5 +5,6 @@ const nextConfig = {
   experimental: { appDir: true },
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  staticPageGenerationTimeout: 180,
 };
 module.exports = nextConfig;
