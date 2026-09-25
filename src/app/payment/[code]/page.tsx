@@ -21,6 +21,27 @@ export default async function PaymentPage({ params }: { params: { code: string }
     orderBy: { order: "asc" },
   });
 
+  // Cast type karena Prisma SQLite tidak support enum
+  type MethodType = "BANK_TRANSFER" | "QRIS" | "WHATSAPP";
+  type Method = {
+    id: string;
+    type: MethodType;
+    name: string;
+    bankAccounts: { id: string; bankName: string; accountNumber: string; accountName: string }[];
+  };
+
+  const typedMethods: Method[] = methods.map(m => ({
+    id: m.id,
+    type: m.type as MethodType,
+    name: m.name,
+    bankAccounts: m.bankAccounts.map(b => ({
+      id: b.id,
+      bankName: b.bankName,
+      accountNumber: b.accountNumber,
+      accountName: b.accountName,
+    })),
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar travelName={settings.travel_name} />
@@ -38,7 +59,7 @@ export default async function PaymentPage({ params }: { params: { code: string }
           total={booking.totalPrice}
           paymentStatus={booking.paymentStatus}
           proofUrl={booking.payment?.proofUrl ?? null}
-          methods={methods.map(m => ({ id: m.id, type: m.type, name: m.name, bankAccounts: m.bankAccounts }))}
+          methods={typedMethods}
           whatsapp={settings.whatsapp_number}
           qrisImage={settings.qris_image_url}
         />
