@@ -1,0 +1,237 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         String   @default("admin")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model City {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  region   String  @default("Jabodetabek")
+  isActive Boolean @default(true)
+
+  routesFrom Route[] @relation("RouteOrigin")
+  routesTo   Route[] @relation("RouteDest")
+
+  @@map("cities")
+}
+
+model Route {
+  id           String   @id @default(cuid())
+  origin       String
+  destination  String
+  originCityId String?
+  destCityId   String?
+  basePrice    Int
+  durationMin  Int      @default(300)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  originCity City? @relation("RouteOrigin", fields: [originCityId], references: [id])
+  destCity   City? @relation("RouteDest",   fields: [destCityId],   references: [id])
+  schedules  Schedule[]
+  bookings   Booking[]
+
+  @@unique([origin, destination])
+  @@index([origin, destination, isActive])
+  @@map("routes")
+}
+
+model VehicleType {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  capacity    Int
+  description String?
+  isActive    Boolean @default(true)
+
+  vehicles      Vehicle[]
+  charterPrices CharterPrice[]
+  charters      CharterBooking[]
+
+  @@map("vehicle_types")
+}
+
+model Vehicle {
+  id            String   @id @default(cuid())
+  name          String
+  plateNumber   String   @unique
+  vehicleTypeId String
+  capacity      Int
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  schedules   Schedule[]
+  charters    CharterBooking[]
+
+  @@map("vehicles")
+}
+
+model Schedule {
+  id            String   @id @default(cuid())
+  routeId       String
+  vehicleId     String?
+  departureTime String
+  arrivalTime   String?
+  priceOverride Int?
+  capacity      Int      @default(10)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  route    Route    @relation(fields: [routeId], references: [id], onDelete: Cascade)
+  vehicle  Vehicle? @relation(fields: [vehicleId], references: [id])
+  bookings Booking[]
+
+  @@index([routeId, isActive])
+  @@map("schedules")
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  code           String   @unique
+  type           String   @default("TICKET")
+  customerName   String
+  customerPhone  String
+  pickupAddress  String?
+  note           String?
+  routeId        String?
+  scheduleId     String?
+  departureDate  DateTime
+  passengerCount Int
+  unitPrice      Int
+  totalPrice     Int
+  status         String   @default("PENDING_PAYMENT")
+  paymentStatus  String   @default("UNPAID")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  route      Route?             @relation(fields: [routeId], references: [id])
+  schedule   Schedule?          @relation(fields: [scheduleId], references: [id])
+  passengers BookingPassenger[]
+  payment    Payment?
+  charter    CharterBooking?
+
+  @@index([code])
+  @@index([customerPhone])
+  @@index([status, paymentStatus])
+  @@map("bookings")
+}
+
+model BookingPassenger {
+  id         String  @id @default(cuid())
+  bookingId  String
+  name       String
+  idNumber   String?
+  seatNumber String?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@map("booking_passengers")
+}
+
+model CharterPrice {
+  id            String  @id @default(cuid())
+  vehicleTypeId String
+  origin        String
+  destination   String
+  price         Int
+  pricePerDay   Int?
+  isActive      Boolean @default(true)
+
+  vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
+
+  @@unique([vehicleTypeId, origin, destination])
+  @@map("charter_prices")
+}
+
+model CharterBooking {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  vehicleTypeId String
+  vehicleId     String?
+  origin        String
+  destination   String
+  pickupAddress String
+  dropAddress   String
+  departureDate DateTime
+  departureTime String
+  durationDays  Int      @default(1)
+  priceQuoted   Int?
+  createdAt     DateTime @default(now())
+
+  booking     Booking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  vehicleType VehicleType @relation(fields: [vehicleTypeId], references: [id])
+  vehicle     Vehicle?    @relation(fields: [vehicleId], references: [id])
+
+  @@map("charter_bookings")
+}
+
+model PaymentMethod {
+  id       String  @id @default(cuid())
+  type     String
+  name     String
+  isActive Boolean @default(true)
+  order    Int     @default(0)
+
+  bankAccounts BankAccount[]
+  payments     Payment[]
+
+  @@map("payment_methods")
+}
+
+model BankAccount {
+  id              String  @id @default(cuid())
+  paymentMethodId String
+  bankName        String
+  accountNumber   String
+  accountName     String
+  isActive        Boolean @default(true)
+
+  paymentMethod PaymentMethod @relation(fields: [paymentMethodId], references: [id], onDelete: Cascade)
+
+  @@map("bank_accounts")
+}
+
+model Payment {
+  id         String    @id @default(cuid())
+  bookingId  String    @unique
+  methodId   String?
+  amount     Int
+  proofUrl   String?
+  status     String    @default("UNPAID")
+  note       String?
+  paidAt     DateTime?
+  verifiedAt DateTime?
+  verifiedBy String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  booking Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  method  PaymentMethod? @relation(fields: [methodId], references: [id])
+
+  @@map("payments")
+}
+
+model Setting {
+  key   String @id
+  value String
+
+  @@map("settings")
+}
